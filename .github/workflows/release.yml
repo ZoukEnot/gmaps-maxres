@@ -25,7 +25,7 @@ jobs:
           python-version: "3.13"
 
       - name: Install dependencies
-        run: python -m pip install --upgrade pip "pillow>=10.0" pyinstaller
+        run: python -m pip install --upgrade pip "pillow>=10.1" pyinstaller
 
       - name: Smoke-test core (dry run)
         run: python gmaps_maxres.py "https://www.google.com/maps/@55.736578,37.5334196,120m" --dry-run

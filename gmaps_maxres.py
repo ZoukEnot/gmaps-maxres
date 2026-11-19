@@ -17,7 +17,7 @@ from pathlib import Path
 from urllib.parse import unquote
 from urllib.request import Request, urlopen
 
-from PIL import Image, ImageStat
+from PIL import Image, ImageDraw, ImageFont, ImageStat
 from PIL.PngImagePlugin import PngInfo
 
 TILE_SIZE = 256
@@ -27,6 +27,7 @@ UA = (
     "(KHTML, like Gecko) Chrome/120.0 Safari/537.36"
 )
 M_PER_DEG_LAT = 110574.0
+CREDIT = "Imagery \u00a9 Google"
 # Approximate on-screen width (px) of a desktop Maps view, used to turn a
 # "@lat,lon,17z" style URL into a ground width.
 SCREEN_PX = 1500
@@ -125,6 +126,26 @@ def ground_size_m(x0: float, y0: float, w_px: int, h_px: int, z: int):
     width = n * math.cos(lat_c) * math.radians(lon_r - lon_l)
     height = m * math.radians(lat_t - lat_b)
     return width, height
+
+
+def add_credit(img: Image.Image, text: str = CREDIT) -> None:
+    """Draw a small, unobtrusive attribution in the bottom-right corner."""
+    w, h = img.size
+    size = max(10, round(min(w, h) * 0.011))
+    try:
+        font = ImageFont.load_default(size=size)
+    except TypeError:  # Pillow < 10.1: fixed-size bitmap font
+        font = ImageFont.load_default()
+    pad = max(3, size // 3)
+    l, t, r, b = font.getbbox(text)
+    box_w, box_h = (r - l) + 2 * pad, (b - t) + 2 * pad
+    x0, y0 = w - box_w, h - box_h
+    if x0 < 0 or y0 < 0:
+        return
+    overlay = Image.new("RGBA", (box_w, box_h), (0, 0, 0, 70))
+    ImageDraw.Draw(overlay).text((pad - l, pad - t), text, font=font, fill=(255, 255, 255, 190))
+    region = img.crop((x0, y0, w, h)).convert("RGBA")
+    img.paste(Image.alpha_composite(region, overlay).convert(img.mode), (x0, y0))
 
 
 def fetch_tile(z: int, x: int, y: int):
@@ -295,6 +316,7 @@ def generate(
     else:
         out_path = (Path(output_dir) if output_dir else Path.cwd()) / name
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    add_credit(canvas)
     stage("Saving PNG...")
     meta = PngInfo()
     for key, val in {
@@ -304,6 +326,7 @@ def generate(
         "center_lat_lon": f"{lat:.7f},{lon:.7f}",
         "tile_zoom": str(z),
         "Source": "Google Maps satellite tiles",
+        "Copyright": CREDIT,
     }.items():
         meta.add_text(key, val)
     canvas.save(out_path, pnginfo=meta)

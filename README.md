@@ -52,7 +52,9 @@ self-contained and can be given to other Windows users directly.
 4. Stitches the tiles on a canvas and crops to the exact area, lossless PNG.
 
 The result is pure satellite imagery (no POI labels/markers) at native
-rendering resolution.
+rendering resolution. A small "Imagery © Google" credit is added in the
+bottom-right corner (about 1% of the image height, semi-transparent) and in
+the PNG `Copyright` metadata.
 
 ## Real-world size in the file name
 

@@ -57,7 +57,7 @@ if exist "%VENV%\Scripts\python.exe" goto :have_venv
 "%PYEXE%" -m venv "%VENV%"
 if errorlevel 1 goto :fail_libs
 :have_venv
-"%VENV%\Scripts\python.exe" -m pip install --disable-pip-version-check --upgrade "pillow>=10.0" pyinstaller
+"%VENV%\Scripts\python.exe" -m pip install --disable-pip-version-check --upgrade "pillow>=10.1" pyinstaller
 if errorlevel 1 goto :fail_libs
 echo.
 
