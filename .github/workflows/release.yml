@@ -49,6 +49,11 @@ jobs:
           $png = Get-ChildItem cli_test.png
           if ($png.Length -lt 100000) { throw "PNG too small" }
           "CLI OK: $($png.Name) $($png.Length) bytes"
+          & $exe "https://yandex.ru/maps/?ll=37.533420%2C55.736578&z=17&l=sat" --width-m 80 -o yandex_test.png
+          if ($LASTEXITCODE -ne 0) { throw "Yandex CLI download failed" }
+          $png = Get-ChildItem yandex_test.png
+          if ($png.Length -lt 50000) { throw "Yandex PNG too small" }
+          "Yandex OK: $($png.Name) $($png.Length) bytes"
           $global:LASTEXITCODE = 0
 
       - name: Test exe starts the window when double-clicked
@@ -72,12 +77,12 @@ jobs:
           cat > notes.md <<'EOF'
           **Download `GMaps-MaxRes.exe` below and double-click it** - nothing to install.
 
-          1. Open the place in Google Maps (satellite view) and copy the address from the browser.
+          1. Open the place in Google Maps or Yandex Maps (satellite view) and copy the link from the browser.
           2. Paste it into the app and press **Download**.
           3. The PNG is saved to `Downloads\GMaps MaxRes`; its real width and height are shown in the window and in the file name (mm).
 
           **Command line:** the same exe works in cmd / PowerShell when given arguments:
-          `GMaps-MaxRes.exe "<google maps link>" [-o out.png] [--width-m N] [--jpg] [--dry-run]` (see `--help`).
+          `GMaps-MaxRes.exe "<google or yandex maps link>" [-o out.png] [--width-m N] [--source google|yandex] [--jpg] [--dry-run]` (see `--help`).
 
           If Windows shows "Windows protected your PC", click **More info -> Run anyway** (the app is not code-signed).
           EOF

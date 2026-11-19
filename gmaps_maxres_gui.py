@@ -11,7 +11,7 @@ from tkinter import filedialog, messagebox, ttk
 
 import gmaps_maxres
 
-APP_TITLE = "Google Maps Max-Res Downloader"
+APP_TITLE = "Maps Max-Res Downloader (Google / Yandex)"
 
 
 def default_output_dir() -> Path:
@@ -62,7 +62,8 @@ class App:
 
         ttk.Label(
             frm,
-            text="1. Open the place in Google Maps (satellite view) and copy the address from the browser.\n"
+            text="1. Open the place in Google Maps or Yandex Maps (satellite view) and copy the link\n"
+                 "    from the browser's address bar (or the map's Share button).\n"
                  "2. Paste it below and press  Download.",
             justify="left",
         ).grid(row=0, column=0, columnspan=3, sticky="w", **pad)
@@ -146,7 +147,7 @@ class App:
             return
         url = self.url_var.get().strip()
         if not url:
-            messagebox.showinfo(APP_TITLE, "Paste a Google Maps link first.")
+            messagebox.showinfo(APP_TITLE, "Paste a Google Maps or Yandex Maps link first.")
             return
         self.result = None
         self.size_var.set("")

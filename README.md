@@ -1,8 +1,8 @@
 # gmaps-maxres
 
-Takes a low-resolution Google Maps link and produces one high-resolution
-satellite PNG by downloading Google's native map tiles at the highest zoom
-level available for that spot and stitching them together.
+Takes a Google Maps or Yandex Maps link and produces one high-resolution
+satellite PNG by downloading the provider's native map tiles at the highest
+zoom level available for that spot and stitching them together.
 
 ```
 python gmaps_maxres.py "https://www.google.com/maps/@55.736578,37.5334196,280m"
@@ -56,6 +56,24 @@ rendering resolution. A small "Imagery © Google" credit is added in the
 bottom-right corner (about 1% of the image height, semi-transparent) and in
 the PNG `Copyright` metadata.
 
+## Yandex Maps links
+
+Yandex links work the same way and are detected automatically, e.g.
+`https://yandex.ru/maps/?ll=37.533420%2C55.736578&z=17&l=sat`, short
+`https://yandex.ru/maps/-/...` share links, and `yandex.com/.by/.kz/...`.
+The location comes from `ll=` (or `pt=` / "what's here" links), the area
+width from `spn=` or the `z=` zoom. Output is `yandex_<lat>_<lon>_z<z>_<W>x<H>mm.png`
+with an "Imagery © Yandex" credit.
+
+Notes:
+- Yandex uses ellipsoidal Mercator (EPSG:3395) tiles; this is handled, so
+  sizes and positions are as accurate as with Google.
+- Yandex satellite imagery tops out at zoom 19 (~17 cm/px in Moscow) versus
+  Google's 21-22, so Yandex images have about 4x fewer pixels per side for
+  the same area. In some Russian cities Yandex photos are newer or clearer.
+- `--source google|yandex` forces a provider regardless of the link, e.g. to
+  get Google imagery for a Yandex link.
+
 ## Real-world size in the file name
 
 The ground width x height covered by the image is computed and appended to the
@@ -105,6 +123,7 @@ Options:
 | Option | Meaning |
 |---|---|
 | `-o, --output FILE` | output PNG path (default `maps_<lat>_<lon>_z<z>.png`) |
+| `--source google\|yandex` | imagery provider (default: the one the link is from) |
 | `--zoom N` | force a tile zoom instead of auto-detecting the max |
 | `--width-m N` | ground width in meters (default: the `Xm` from the URL, else 300) |
 | `--margin F` | extra margin fraction (default 0.15) |
