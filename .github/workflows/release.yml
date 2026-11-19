@@ -18,9 +18,9 @@ jobs:
     env:
       TAG: ${{ github.event.inputs.tag || github.ref_name }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
 
@@ -32,15 +32,37 @@ jobs:
 
       - name: Build exe
         run: >
-          python -m PyInstaller --noconfirm --clean --onefile --windowed
+          python -m PyInstaller --noconfirm --clean --onefile --hide-console hide-early
           --name GMaps-MaxRes gmaps_maxres_gui.py
 
-      - name: Check exe
+      - name: Test exe from the command line
         shell: pwsh
         run: |
           $exe = "dist/GMaps-MaxRes.exe"
-          if (-not (Test-Path $exe)) { throw "exe not built" }
           "{0:N1} MB" -f ((Get-Item $exe).Length / 1MB)
+          & $exe --help
+          if ($LASTEXITCODE -ne 0) { throw "--help failed" }
+          & $exe "not a link"
+          if ($LASTEXITCODE -eq 0) { throw "bad link should fail with non-zero exit code" }
+          & $exe "https://www.google.com/maps/@55.736578,37.5334196,60m" -o cli_test.png
+          if ($LASTEXITCODE -ne 0) { throw "CLI download failed" }
+          $png = Get-ChildItem cli_test.png
+          if ($png.Length -lt 100000) { throw "PNG too small" }
+          "CLI OK: $($png.Name) $($png.Length) bytes"
+          $global:LASTEXITCODE = 0
+
+      - name: Test exe starts the window when double-clicked
+        shell: pwsh
+        run: |
+          $p = Start-Process dist/GMaps-MaxRes.exe -PassThru
+          Start-Sleep -Seconds 20
+          $p.Refresh()
+          $all = @(Get-Process GMaps-MaxRes -ErrorAction SilentlyContinue)
+          "launcher exited: $($p.HasExited); running instances: $($all.Count)"
+          $all | Where-Object { $_.MainWindowTitle } | ForEach-Object { "window: $($_.MainWindowTitle)" }
+          $all | Stop-Process -Force -ErrorAction SilentlyContinue
+          if (-not $p.HasExited) { throw "console launcher should hand over to a console-less GUI process and exit" }
+          if ($all.Count -lt 1) { throw "GUI process is not running" }
 
       - name: Create or update GitHub release
         shell: bash
@@ -53,6 +75,9 @@ jobs:
           1. Open the place in Google Maps (satellite view) and copy the address from the browser.
           2. Paste it into the app and press **Download**.
           3. The PNG is saved to `Downloads\GMaps MaxRes`; its real width and height are shown in the window and in the file name (mm).
+
+          **Command line:** the same exe works in cmd / PowerShell when given arguments:
+          `GMaps-MaxRes.exe "<google maps link>" [-o out.png] [--width-m N] [--jpg] [--dry-run]` (see `--help`).
 
           If Windows shows "Windows protected your PC", click **More info -> Run anyway** (the app is not code-signed).
           EOF

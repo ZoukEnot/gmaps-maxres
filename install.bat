@@ -65,7 +65,7 @@ rem ---------------------------------------------------------------
 rem  Step 3: build the .exe
 rem ---------------------------------------------------------------
 echo [3/4] Building the program (this can take a minute)...
-"%VENV%\Scripts\python.exe" -m PyInstaller --noconfirm --clean --onefile --windowed ^
+"%VENV%\Scripts\python.exe" -m PyInstaller --noconfirm --clean --onefile --hide-console hide-early ^
     --name "%APP_NAME%" ^
     --paths "%~dp0." ^
     --distpath "%APPDIR%\dist" ^

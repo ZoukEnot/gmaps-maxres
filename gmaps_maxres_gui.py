@@ -223,7 +223,36 @@ class App:
         self.go_btn.config(state="normal")
 
 
-def main():
+def _launched_by_double_click() -> bool:
+    """True when our console window was created just for us (Explorer, a
+    shortcut, Run dialog) rather than inherited from cmd / PowerShell."""
+    try:
+        import ctypes
+        buf = (ctypes.c_uint32 * 16)()
+        n = ctypes.windll.kernel32.GetConsoleProcessList(buf, 16)
+    except Exception:
+        return False
+    # A PyInstaller onefile exe is two processes (bootloader + python);
+    # a terminal would add at least one more (cmd.exe, powershell.exe, ...).
+    limit = 2 if getattr(sys, "frozen", False) else 1
+    return 0 < n <= limit
+
+
+def _relaunch_without_console() -> bool:
+    """Start a console-less copy of ourselves to host the GUI, so no terminal
+    window (conhost or Windows Terminal) stays open behind it."""
+    env = dict(os.environ, GMAPS_MAXRES_GUI="1", PYINSTALLER_RESET_ENVIRONMENT="1")
+    cmd = [sys.executable] if getattr(sys, "frozen", False) else [sys.executable, os.path.abspath(__file__)]
+    flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+    try:
+        subprocess.Popen(cmd, env=env, creationflags=flags, close_fds=True,
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except Exception:
+        return False
+
+
+def run_gui():
     if sys.platform.startswith("win"):
         try:  # crisp text on high-DPI screens
             import ctypes
@@ -233,6 +262,20 @@ def main():
     root = tk.Tk()
     App(root)
     root.mainloop()
+
+
+def main():
+    # Any command-line arguments -> behave exactly like the CLI tool.
+    if len(sys.argv) > 1:
+        return gmaps_maxres.main()
+    if (
+        sys.platform.startswith("win")
+        and os.environ.get("GMAPS_MAXRES_GUI") != "1"
+        and _launched_by_double_click()
+        and _relaunch_without_console()
+    ):
+        return None
+    return run_gui()
 
 
 if __name__ == "__main__":

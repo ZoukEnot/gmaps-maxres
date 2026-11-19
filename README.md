@@ -13,7 +13,15 @@ python gmaps_maxres.py "https://www.google.com/maps/@55.736578,37.5334196,280m"
 
 Get **`GMaps-MaxRes.exe`** from the
 [latest release](https://github.com/ZoukEnot/gmaps-maxres/releases/latest)
-and double-click it - no installation needed. It is built automatically by
+and double-click it - no installation needed.
+
+The same exe is also a command-line tool: run it with arguments from cmd or
+PowerShell and it behaves exactly like `gmaps_maxres.py` (output, exit codes):
+
+```bat
+GMaps-MaxRes.exe "https://www.google.com/maps/@55.736578,37.5334196,280m" -o moscow.png
+GMaps-MaxRes.exe --help
+``` It is built automatically by
 GitHub Actions (`.github/workflows/release.yml`) for every `v*` tag.
 
 ## Windows: build it yourself with install.bat
